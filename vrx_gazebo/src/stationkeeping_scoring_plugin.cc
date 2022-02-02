@@ -91,7 +91,7 @@ void StationkeepingScoringPlugin::Load(gazebo::physics::WorldPtr _world,
 
     // Convert local to lat/lon
     // Snippet from UUV Simulator SphericalCoordinatesROSInterfacePlugin.cc
-    ignition::math::Vector3d cartVec(this->goalX, this->goalY, xyz.Z());
+    ignition::math::Vector3d cartVec(-this->goalX, -this->goalY, xyz.Z());
 
 #if GAZEBO_MAJOR_VERSION >= 8
     ignition::math::Vector3d scVec =
