@@ -68,6 +68,11 @@ class WaypointMarkers
   /// \return Returns true if marker is successfully sent to Gazebo
   public: bool DrawMarker(int _marker_id, double _x, double _y,
       double _yaw, std::string _text = "");
+  
+  /// \brief Remove waypoint marker in Gazebo
+  /// \param[in] _marker_id Unique marker id for waypoint
+  /// \return Returns true if marker is successfully removed in Gazebo
+  public: bool DeleteMarker(int _marker_id);
 
   /// \brief Draw a new waypoint marker in Gazebo
   /// \param[in] _x X coordinate of waypoint marker
@@ -77,6 +82,8 @@ class WaypointMarkers
   /// \return Returns true if marker is successfully sent to Gazebo
   public: bool DrawMarker(double _x, double _y, double _yaw,
     std::string _text = "");
+
+  
 
   /// \brief Namespace for Gazebo markers
   private: std::string ns;

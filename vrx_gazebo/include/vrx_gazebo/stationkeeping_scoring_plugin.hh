@@ -18,6 +18,8 @@
 #ifndef VRX_GAZEBO_STATIONKEEPING_SCORING_PLUGIN_HH_
 #define VRX_GAZEBO_STATIONKEEPING_SCORING_PLUGIN_HH_
 
+
+#include <geographic_msgs/GeoPose.h>
 #include <geographic_msgs/GeoPoseStamped.h>
 #include <ros/ros.h>
 #include <memory>
@@ -72,6 +74,9 @@ class StationkeepingScoringPlugin : public ScoringPlugin
   /// \brief Publish the goal pose.
   private: void PublishGoal();
 
+  /// \brief Reset task
+  protected: void ResetTask();
+
   /// \brief Pointer to the update event connection.
   private: gazebo::event::ConnectionPtr updateConnection;
 
@@ -84,6 +89,9 @@ class StationkeepingScoringPlugin : public ScoringPlugin
   /// \brief Topic where mean pose error is published.
   private: std::string meanErrorTopic = "/vrx/station_keeping/mean_pose_error";
 
+  /// \brief Topic where control commands are expected.
+  private: std::string setGoalPoseTopicName = "/vrx/station_keeping/set_goal";
+
   /// \brief ROS node handle.
   private: std::unique_ptr<ros::NodeHandle> rosNode;
 
@@ -95,6 +103,18 @@ class StationkeepingScoringPlugin : public ScoringPlugin
 
   /// \brief Publisher for the current mean error.
   private: ros::Publisher meanErrorPub;
+
+  /// \brief Callback function called when receiving a new goal
+  /// via the pinger subscription callback.
+  /// \param[in] _pos New goal pose
+  public: void GoalPoseCallback(
+    const geographic_msgs::GeoPoseConstPtr &_pose);
+
+  /// \brief Subscribes to the topic that set the goal position.
+  public: ros::Subscriber setGoalPoseSub;
+
+  /// \brief Mutex to protect the position vector.
+  public: std::mutex mutex;
 
   /// \brief Goal pose in local (Gazebo) coordinates.
   private: double goalX;

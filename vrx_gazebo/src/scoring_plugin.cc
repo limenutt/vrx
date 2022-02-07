@@ -517,3 +517,20 @@ unsigned int ScoringPlugin::GetNumCollisions() const
 {
   return this->numCollisions;
 }
+
+void ScoringPlugin::ResetTask()
+{ 
+  #if GAZEBO_MAJOR_VERSION >= 8
+    this->currentTime = this->world->SimTime();
+  #else
+    this->currentTime = this->world->GetSimTime();
+  #endif
+  this->readyTime = this->currentTime;
+  this->runningTime = this->currentTime;
+  this->finishTime = this->runningTime + this->runningStateDuration;
+  this->timedOut = false;
+  this->score = 0;
+  this->collisionCounter = 0;
+  this->collisionBuffer = 0;
+  this->numCollisions = 0u;
+}

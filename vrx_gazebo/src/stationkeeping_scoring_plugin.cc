@@ -136,6 +136,15 @@ void StationkeepingScoringPlugin::Load(gazebo::physics::WorldPtr _world,
   this->meanErrorPub  = this->rosNode->advertise<std_msgs::Float64>(
     this->meanErrorTopic, 100);
 
+  if (_sdf->HasElement("set_goal_topic"))
+  {
+    this->setGoalPoseTopicName = _sdf->Get<std::string>("set_goal_topic");
+  }
+
+  this->setGoalPoseSub = this->rosNode->subscribe(
+    setGoalPoseTopicName, 1, &StationkeepingScoringPlugin::GoalPoseCallback, this);
+
+
   if (_sdf->HasElement("head_error_on"))
     this->headErrorOn = _sdf->Get<bool>("head_error_on");
 
@@ -147,7 +156,7 @@ void StationkeepingScoringPlugin::Load(gazebo::physics::WorldPtr _world,
     this->waypointMarkers.Load(_sdf->GetElement("markers"));
     if (this->waypointMarkers.IsAvailable())
     {
-      if (!this->waypointMarkers.DrawMarker(0, this->goalX, this->goalY,
+      if (!this->waypointMarkers.DrawMarker(this->goalX, this->goalY,
             this->goalYaw))
       {
         gzerr << "Error creating visual marker" << std::endl;
@@ -264,6 +273,50 @@ void StationkeepingScoringPlugin::OnRunning()
 
   this->timer.Start();
 }
+
+//////////////////////////////////////////////////
+void StationkeepingScoringPlugin::GoalPoseCallback(
+  const geographic_msgs::GeoPoseConstPtr &_pose)
+{
+  // TODO: add mutex to prevent simulataneous reads and writes for goal pose
+  // std::lock_guard<std::mutex> lock(this->mutex);
+
+  this->goalLat = _pose->position.latitude;
+  this->goalLon = _pose->position.longitude;
+
+  const ignition::math::Quaternion<double> orientation(_pose->orientation.w, _pose->orientation.x, _pose->orientation.y, _pose->orientation.z);
+  ignition::math::Vector3d rollPitchYaw = orientation.Euler();
+  this->goalYaw = rollPitchYaw.Z();
+
+  // Convert lat/lon to local
+  // Snippet from UUV Simulator SphericalCoordinatesROSInterfacePlugin.cc
+  ignition::math::Vector3d scVec(this->goalLat, this->goalLon, 0.0);
+
+  #if GAZEBO_MAJOR_VERSION >= 8
+    ignition::math::Vector3d cartVec =
+      this->world->SphericalCoords()->LocalFromSpherical(scVec);
+  #else
+    ignition::math::Vector3d cartVec =
+      this->world->GetSphericalCoordinates()->LocalFromSpherical(scVec);
+  #endif
+    this->goalX = cartVec.X();
+    this->goalY = cartVec.Y();
+    
+    if (!this->waypointMarkers.DrawMarker(this->goalX, this->goalY,
+          this->goalYaw))
+    {
+      ROS_ERROR("Error updating marker");
+      gzerr << "Error creating visual marker" << std::endl;
+    }
+  this->ResetTask();
+}
+void StationkeepingScoringPlugin::ResetTask() {
+  this->ScoringPlugin::ResetTask();
+  this->totalPoseError = 0;
+  this->sampleCount = 0;
+  this->PublishGoal();
+}
+
 
 // Register plugin with gazebo
 GZ_REGISTER_WORLD_PLUGIN(StationkeepingScoringPlugin)

@@ -174,6 +174,9 @@ class ScoringPlugin : public gazebo::WorldPlugin
   /// \brief Get the number of WAM-V collisions.
   protected: unsigned int GetNumCollisions() const;
 
+  /// \brief Reset task
+  protected: void ResetTask();
+
   /// \brief Callback executed at every world update.
   private: void Update();
 
